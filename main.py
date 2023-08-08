@@ -1,7 +1,10 @@
 from bardapi import BardAsync
-import configparser 
-import discord 
+import configparser
+import discord
 from discord.ext import commands
+
+# logging
+import datetime
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -9,6 +12,7 @@ BARD_TOKEN = config["TOKENS"]['bard_token']
 bard = BardAsync(token=BARD_TOKEN)
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents, heartbeat_timeout=60)
+
 
 @bot.event
 async def on_ready():
@@ -22,6 +26,7 @@ async def on_ready():
     )
     print(f"Invite link: {invite_link}")
 
+
 @bot.tree.command(name="reset", description="Reset chat context")
 async def reset(interaction: discord.Interaction):
     await interaction.response.defer()
@@ -29,8 +34,9 @@ async def reset(interaction: discord.Interaction):
     bard = BardAsync(token=BARD_TOKEN)
     await interaction.followup.send("Chat context successfully reset.")
     return
-    
-@bot.tree.command(name="chat", description="Chat with Bard")
+
+
+@bot.tree.command(name="chat", description="Chat with Milanobot")
 async def chat(interaction: discord.Interaction, prompt: str, image: discord.Attachment = None):
     await interaction.response.defer()
     if image is not None:
@@ -44,13 +50,14 @@ async def chat(interaction: discord.Interaction, prompt: str, image: discord.Att
         else:
             await interaction.followup.send(response['content'])
             return
-    response = await generate_response(prompt) 
+    response = await generate_response(prompt)
     if len(response['content']) > 2000:
         embed = discord.Embed(title="Response", description=response['content'], color=0xf1c40f)
         await interaction.followup.send(embed=embed)
     else:
         await interaction.followup.send(response['content'])
     return
+
 
 async def generate_response(prompt):
     response = await bard.get_answer(prompt)
@@ -61,29 +68,38 @@ async def generate_response(prompt):
             if images:
                 for image in images:
                     response["content"] += f"\n{image}"
+                # Add the prompt and the response to the content
+        response["content"] = f"**Your question:** {prompt}\n\n**Response from Milanobot:** {response['content']}"
+        # log the interaction
+        print("New input: " + prompt)
+        log_interaction("User", prompt, response["content"])
         return response
-    
-@bot.tree.command(name="public", description = "Bot will respond to all messages")
+
+
+@bot.tree.command(name="public", description="Bot will respond to all messages")
 async def public(interaction: discord.Interaction):
     config = read_config()
     if config.getboolean("SETTINGS", "reply_all"):
         await interaction.response.send_message("Bot is already in public mode")
     else:
-        config["SETTINGS"]["reply_all"] = "True"
+        config["SETTINGS"]["reply_all"] = "True"  # Update to string "True"
         await interaction.response.send_message("Bot will now respond to all messages")
     write_config(config)
+
     return
 
-@bot.tree.command(name="private", description = "Bot will only respond to /chat")
+
+@bot.tree.command(name="private", description="Bot will only respond to /chat")
 async def private(interaction: discord.Interaction):
     config = read_config()
-    if not config.getboolean("SETTINGS", "reply_all"):
-        config["SETTINGS"]["reply_all"] = "false"
+    if config.getboolean("SETTINGS", "reply_all"):
+        config["SETTINGS"]["reply_all"] = "False"  # Update to string "False"
         await interaction.response.send_message("Bot will now only respond to /chat")
     else:
         await interaction.response.send_message("Bot is already in private mode")
     write_config(config)
     return
+
 
 @bot.event
 async def on_message(message):
@@ -103,13 +119,14 @@ async def on_message(message):
 async def images(interaction: discord.Interaction):
     config = read_config()
     if config.getboolean("SETTINGS", "use_images"):
-        config["SETTINGS"]["use_images"] = "false"
+        config["SETTINGS"]["use_images"] = "False"
         await interaction.response.send_message("Bot will no longer respond with images")
     else:
-        config["SETTINGS"]["use_images"] = "true"
+        config["SETTINGS"]["use_images"] = "True"
         await interaction.response.send_message("Bot will now respond with images")
     write_config(config)
     return
+
 
 @bot.tree.command(name="help", description="Get all commands")
 async def help(interaction: discord.Interaction):
@@ -122,14 +139,28 @@ async def help(interaction: discord.Interaction):
 
     await interaction.response.send_message(embed=embed, ephemeral=True)
     return
-    
+
+
 def read_config():
     config = configparser.ConfigParser()
     config.read("config.ini")
     return config
 
+
 def write_config(config):
     with open("config.ini", "w") as configfile:
         config.write(configfile)
+
+
+def log_interaction(author, message, response):
+    print("Logging interaction...")
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open("interaction_log.txt", "a") as log_file:
+        log_file.write(f"Timestamp: {timestamp}\n")
+        log_file.write(f"Author: {author}\n")
+        log_file.write(f"Message: {message}\n")
+        log_file.write(f"Response: {response}\n")
+        log_file.write("=" * 50 + "\n")
+
 
 bot.run(config["TOKENS"]['discord_bot_token'])
