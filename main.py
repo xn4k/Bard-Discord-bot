@@ -5,6 +5,8 @@ from discord.ext import commands
 
 # logging
 import datetime
+# import ascii art
+import pyfiglet
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -115,6 +117,7 @@ async def on_message(message):
             else:
                 await message.channel.send(response['content'])
 
+
 @bot.tree.command(name="images", description="Toggle if bot should respond with images")
 async def images(interaction: discord.Interaction):
     config = read_config()
@@ -128,6 +131,20 @@ async def images(interaction: discord.Interaction):
     return
 
 
+@bot.tree.command(name="ascii", description="Generate ASCII art from text")
+async def generate_ascii(interaction: discord.Interaction, text: str):
+    ascii_text = pyfiglet.figlet_format(text)
+    await interaction.response.send_message(f"```\n{ascii_text}\n```")
+
+
+@bot.tree.command(name="author", description="Information about the author")
+async def author_info(interaction: discord.Interaction):
+    author_info_text = "Hello, this is a test message."
+
+    await interaction.response.send_message(author_info_text)
+    return
+
+
 @bot.tree.command(name="help", description="Get all commands")
 async def help(interaction: discord.Interaction):
     embed = discord.Embed(title="Commands", description="All commands for the bot", color=0xf1c40f)
@@ -136,6 +153,8 @@ async def help(interaction: discord.Interaction):
     embed.add_field(name="/public", value="Set bot to respond to all messages", inline=False)
     embed.add_field(name="/private", value="Set bot to only respond to /chat", inline=False)
     embed.add_field(name="/images", value="Toggle if bot should respond with images", inline=False)
+    embed.add_field(name="/ascii", value="Generate ASCII art from text", inline=False)
+    embed.add_field(name="/author", value="Provide information about the author", inline=False)
 
     await interaction.response.send_message(embed=embed, ephemeral=True)
     return
@@ -155,11 +174,15 @@ def write_config(config):
 def log_interaction(author, message, response):
     print("Logging interaction...")
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open("interaction_log.txt", "a") as log_file:
+    with open("interaction_log.txt", "a", encoding="utf-8") as log_file:
         log_file.write(f"Timestamp: {timestamp}\n")
         log_file.write(f"Author: {author}\n")
         log_file.write(f"Message: {message}\n")
-        log_file.write(f"Response: {response}\n")
+
+        # Encode the response to utf-8 with 'replace' error handling and decode back to utf-8
+        filtered_response = response.encode('utf-8', errors='replace').decode('utf-8')
+        log_file.write(f"Response: {filtered_response}\n")
+
         log_file.write("=" * 50 + "\n")
 
 
