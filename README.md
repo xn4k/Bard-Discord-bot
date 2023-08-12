@@ -47,7 +47,11 @@
 * `/public`: Toggle if bot should respond to all messages in chat
 * `/private`: Toggle if bot should only respond to /chat
 * `/images`: Toggle if bot should respond with images
+* `/author`: Provide information about the author
+* `/ascii`: Generate ASCII art from text
 
 ## Credits
 
 Some of this README.md is from [Zero6992](https://github.com/zero6992)
+Codebase is from [armintum](https://github.com/armintum)
+
