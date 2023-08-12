@@ -66,7 +66,7 @@ async def generate_response(prompt):
     if not "Unable to get response." in response["content"]:
         config = read_config()
         if config.getboolean("SETTINGS", "use_images"):
-            images = response["images"]
+            images = response.get("images", [])  # Use dict.get() to retrieve images or an empty list if not present
             if images:
                 for image in images:
                     response["content"] += f"\n{image}"
@@ -156,8 +156,11 @@ async def help(interaction: discord.Interaction):
     embed.add_field(name="/ascii", value="Generate ASCII art from text", inline=False)
     embed.add_field(name="/author", value="Provide information about the author", inline=False)
 
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-    return
+    # Send the embed to the channel where the command was invoked
+    await interaction.channel.send(embed=embed)
+
+    # Respond to the interaction to acknowledge the command
+    await interaction.response.send_message("Help information:")
 
 
 def read_config():
