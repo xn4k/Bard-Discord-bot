@@ -7,6 +7,8 @@ from discord.ext import commands
 import datetime
 # import ascii art
 import pyfiglet
+# import jokes
+import pyjokes
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -139,10 +141,16 @@ async def generate_ascii(interaction: discord.Interaction, text: str):
 
 @bot.tree.command(name="author", description="Information about the author")
 async def author_info(interaction: discord.Interaction):
-    author_info_text = "Hello, this is a test message."
+    author_info_text = "Hello, my name is Mikhail aka xn4k, contact me on Discord: xn4k, if you have any questions."
 
     await interaction.response.send_message(author_info_text)
     return
+
+
+@bot.tree.command(name="joke", description="Get a random joke")
+async def get_joke(interaction: discord.Interaction):
+    joke = pyjokes.get_joke()
+    await interaction.response.send_message(joke)
 
 
 @bot.tree.command(name="help", description="Get all commands")
@@ -155,6 +163,7 @@ async def help(interaction: discord.Interaction):
     embed.add_field(name="/images", value="Toggle if bot should respond with images", inline=False)
     embed.add_field(name="/ascii", value="Generate ASCII art from text", inline=False)
     embed.add_field(name="/author", value="Provide information about the author", inline=False)
+    embed.add_field(name="/joke", value="Get a random joke", inline=False)
 
     # Send the embed to the channel where the command was invoked
     await interaction.channel.send(embed=embed)
