@@ -9,6 +9,10 @@ import datetime
 import pyfiglet
 # import jokes
 import pyjokes
+# import reminder function
+import asyncio
+import time
+from discord.ext import commands, tasks
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -16,6 +20,17 @@ BARD_TOKEN = config["TOKENS"]['bard_token']
 bard = BardAsync(token=BARD_TOKEN)
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents, heartbeat_timeout=60)
+
+
+class Reminder:
+    def __init__(self, user_id, message, delay):
+        self.user_id = user_id
+        self.message = message
+        self.delay = delay
+        self.start_time = time.time()
+
+
+active_reminders = []
 
 
 @bot.event
@@ -29,6 +44,9 @@ async def on_ready():
         scopes=("bot", "applications.commands")
     )
     print(f"Invite link: {invite_link}")
+
+    # Start the reminders loop
+    check_reminders.start()
 
 
 @bot.tree.command(name="reset", description="Reset chat context")
@@ -153,6 +171,52 @@ async def get_joke(interaction: discord.Interaction):
     await interaction.response.send_message(joke)
 
 
+@bot.tree.command(name="remind", description="Set a reminder")
+async def remind_command(interaction: discord.Interaction):
+    await interaction.response.send_message("Usage: /remind <time> <message>")
+    return
+
+
+# Define the reminder command
+@bot.command(name="remind")
+async def remind(ctx, delay, *, message):
+    user_id = ctx.author.id
+
+    # Convert the time delay input to seconds
+    if delay.endswith("seconds"):
+        seconds = int(delay.split(" ")[0])
+    elif delay.endswith("minutes"):
+        seconds = int(delay.split(" ")[0]) * 60
+    elif delay.endswith("hours"):
+        seconds = int(delay.split(" ")[0]) * 3600
+    elif delay.endswith("days"):
+        seconds = int(delay.split(" ")[0]) * 86400
+    else:
+        await ctx.send("Invalid time format. Please use 'seconds', 'minutes', 'hours', or 'days'.")
+        return
+
+    reminder = Reminder(user_id, message, seconds)
+    active_reminders.append(reminder)
+    await ctx.send(f"Reminder set: '{message}' in {delay}.")
+
+
+# Background task to check reminders
+@tasks.loop(seconds=5)
+async def check_reminders():
+    now = time.time()
+    reminders_to_remove = []
+
+    for reminder in active_reminders:
+        if now >= reminder.start_time + reminder.delay:
+            user = bot.get_user(reminder.user_id)
+            if user:
+                await user.send(f"Reminder: {reminder.message}")
+            reminders_to_remove.append(reminder)
+
+    for reminder in reminders_to_remove:
+        active_reminders.remove(reminder)
+
+
 @bot.tree.command(name="help", description="Get all commands")
 async def help(interaction: discord.Interaction):
     embed = discord.Embed(title="Commands", description="All commands for the bot", color=0xf1c40f)
@@ -164,6 +228,7 @@ async def help(interaction: discord.Interaction):
     embed.add_field(name="/ascii", value="Generate ASCII art from text", inline=False)
     embed.add_field(name="/author", value="Provide information about the author", inline=False)
     embed.add_field(name="/joke", value="Get a random joke", inline=False)
+    embed.add_field(name="/remind", value="Set a reminder", inline=False)
 
     # Send the embed to the channel where the command was invoked
     await interaction.channel.send(embed=embed)
