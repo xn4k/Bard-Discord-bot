@@ -23,6 +23,22 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents, heartbeat_timeout=60)
 
 
+# Add the convert function
+def convert(time):
+    pos = ['s', 'm', 'h', 'd']
+
+    time_dict = {"s": 1, "m": 60, "h": 3600, "d": 3600 * 24}
+
+    unit = time[-1]
+
+    if unit not in pos:
+        return -1
+    try:
+        val = int(time[:-1])
+    except:
+        return -2
+
+    return val * time_dict[unit]
 
 @bot.event
 async def on_ready():
@@ -159,6 +175,24 @@ async def get_joke(interaction: discord.Interaction):
     await interaction.response.send_message(joke)
 
 
+@bot.tree.command(name="remind", description="Set a reminder")
+async def set_reminder(interaction: discord.Interaction, time: str, reminder_text: str):
+    await interaction.response.defer()
+
+    time_seconds = convert(time)
+    if time_seconds == -1:
+        await interaction.followup.send("Invalid time unit. Use 's', 'm', 'h', or 'd'.")
+        return
+    elif time_seconds == -2:
+        await interaction.followup.send("Invalid time format. Use a valid number followed by 's', 'm', 'h', or 'd'.")
+        return
+
+    await interaction.followup.send(f"Okay, I will remind you in {time}.")
+
+    await asyncio.sleep(time_seconds)
+
+    await interaction.followup.send(f"Reminder: {reminder_text}")
+
 
 @bot.tree.command(name="help", description="Get all commands")
 async def help(interaction: discord.Interaction):
@@ -171,6 +205,7 @@ async def help(interaction: discord.Interaction):
     embed.add_field(name="/ascii", value="Generate ASCII art from text", inline=False)
     embed.add_field(name="/author", value="Provide information about the author", inline=False)
     embed.add_field(name="/joke", value="Get a random joke", inline=False)
+    embed.add_field(name="/remind", value="Set a reminder", inline=False)
 
     # Send the embed to the channel where the command was invoked
     await interaction.channel.send(embed=embed)
