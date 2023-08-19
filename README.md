@@ -50,7 +50,7 @@
 * `/author`: Provide information about the author
 * `/ascii`: Generate ASCII art from text
 * `/remind`: Create a reminder so the bot reminds you in x ammount of time
-
+* `/joke`: Bot makes a random programmer joke xD
 ## Credits
 
 Some of this README.md is from [Zero6992](https://github.com/zero6992)
