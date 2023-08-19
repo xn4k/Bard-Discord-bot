@@ -49,6 +49,7 @@
 * `/images`: Toggle if bot should respond with images
 * `/author`: Provide information about the author
 * `/ascii`: Generate ASCII art from text
+* `/remind`: Create a reminder so the bot reminds you in x ammount of time
 
 ## Credits
 
