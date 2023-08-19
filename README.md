@@ -39,8 +39,10 @@
 ## Step 4. Invite the bot
 ![image](https://user-images.githubusercontent.com/91066601/236673317-64a1789c-f6b1-48d7-ba1b-dbb18e7d802a.png)
 
-## Commands
+## New 
 - Added logging function, so you can watch through the logs to see how people use it
+
+## Commands
 
 * `/help`: Displays a list of all available commands
 * `/chat`: Chat with Bard
