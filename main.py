@@ -23,23 +23,6 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents, heartbeat_timeout=60)
 
 
-# Add the convert function
-def convert(time):
-    pos = ['s', 'm', 'h', 'd']
-
-    time_dict = {"s": 1, "m": 60, "h": 3600, "d": 3600 * 24}
-
-    unit = time[-1]
-
-    if unit not in pos:
-        return -1
-    try:
-        val = int(time[:-1])
-    except:
-        return -2
-
-    return val * time_dict[unit]
-
 @bot.event
 async def on_ready():
     await bot.tree.sync()
@@ -174,6 +157,23 @@ async def get_joke(interaction: discord.Interaction):
     joke = pyjokes.get_joke()
     await interaction.response.send_message(joke)
 
+# Add the convert function
+def convert(time):
+    pos = ['s', 'm', 'h', 'd']
+
+    time_dict = {"s": 1, "m": 60, "h": 3600, "d": 3600 * 24}
+
+    unit = time[-1]
+
+    if unit not in pos:
+        return -1
+    try:
+        val = int(time[:-1])
+    except:
+        return -2
+
+    return val * time_dict[unit]
+
 
 @bot.tree.command(name="remind", description="Set a reminder")
 async def set_reminder(interaction: discord.Interaction, time: str, reminder_text: str):
@@ -187,7 +187,10 @@ async def set_reminder(interaction: discord.Interaction, time: str, reminder_tex
         await interaction.followup.send("Invalid time format. Use a valid number followed by 's', 'm', 'h', or 'd'.")
         return
 
-    await interaction.followup.send(f"Okay, I will remind you in {time}.")
+    # Mention the user who set the reminder
+    user_mention = interaction.user.mention  # Mention the user who set the reminder
+
+    await interaction.followup.send(f"Okay, {user_mention}, I will remind you in {time}, with the following message: {reminder_text}")
 
     await asyncio.sleep(time_seconds)
 
@@ -196,8 +199,8 @@ async def set_reminder(interaction: discord.Interaction, time: str, reminder_tex
 
 @bot.tree.command(name="help", description="Get all commands")
 async def help(interaction: discord.Interaction):
-    embed = discord.Embed(title="Commands", description="All commands for the bot", color=0xf1c40f)
-    embed.add_field(name="/chat", value="Chat with Bard", inline=False)
+    embed = discord.Embed(title="Commands", description="All commands for the bot", color=0xFF66B2)
+    embed.add_field(name="/chat", value="Chat with Bot", inline=False)
     embed.add_field(name="/reset", value="Reset chat context", inline=False)
     embed.add_field(name="/public", value="Set bot to respond to all messages", inline=False)
     embed.add_field(name="/private", value="Set bot to only respond to /chat", inline=False)
@@ -205,7 +208,7 @@ async def help(interaction: discord.Interaction):
     embed.add_field(name="/ascii", value="Generate ASCII art from text", inline=False)
     embed.add_field(name="/author", value="Provide information about the author", inline=False)
     embed.add_field(name="/joke", value="Get a random joke", inline=False)
-    embed.add_field(name="/remind", value="Set a reminder", inline=False)
+    embed.add_field(name="/remind", value="Set a reminder, use s, m, h or d, like: /remind 10 s Buy eggs", inline=False)
 
     # Send the embed to the channel where the command was invoked
     await interaction.channel.send(embed=embed)
